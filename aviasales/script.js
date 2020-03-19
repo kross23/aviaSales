@@ -9,10 +9,15 @@ const serch = document.querySelector('.form-search'),
 //..массив городов
 const sitiesApi = 'http://api.travelpayouts.com/data/ru/cities.json',
           proxy = 'https://cors-anywhere.herokuapp.com/',
-          API_KEY = '685a5a5eae552ce74cf93cd4f53b0eda',
-          Kaledar = 'http://min-prices.aviasales.ru/calendar_preload';
-
+          API_KEY = '&685a5a5eae552ce74cf93cd4f53b0eda',
+          Kaledar = 'http://min-prices.aviasales.ru/calendar_preload?';
 let city = []; 
+let bilet=[];
+const origin = 'CEK';// IATA-код пункта отправления. IATA код указывается буквами верхнего регистра, например MOW
+let destination = 'KGD';//IATA-код пункта назначения. IATA код указывается буквами верхнего регистра,
+let depart_date = '2020-05-15&' ;//дата вылета в формате YYYY-MM-DD.
+let one_way = true;// поиск билетов в один конец (true или false).
+
 //..API
 const getData=(url, callback)=>{
     const  request = new XMLHttpRequest();//обьект запроса
@@ -44,7 +49,7 @@ const showSite = (input,list) =>{
            Filtr.forEach((item) =>{
                const li = document.createElement('li');//..создаем элемент
                li.classList.add('dropdown__city');//добавляем класс
-               li.textContent = item.name;
+               li.textContent = item.name+' '+item.code;
                list.append(li);
            });
        }
@@ -54,6 +59,9 @@ const selectSite=(e,input,list )=>{
     const target = e.target;
     if(target.tagName.toLowerCase() ==='li'){
         input.value = target.textContent;
+        const ngt=target.textContent;
+        const code = ngt[ngt.length-3]+ngt[ngt.length-2]+ngt[ngt.length-1];///str[str.length - 1]
+         console.log(code);   
         list.textContent='';}
 };
 
@@ -65,7 +73,7 @@ inputCitiesForm.addEventListener('input',()=>{
 
 DropdownCitiesFrom.addEventListener('click',(event)=>{
     selectSite(event,inputCitiesForm,DropdownCitiesFrom);
-
+                        
 });
 //.....................................................
 inputCitiesTo.addEventListener('input',()=>{
@@ -73,9 +81,13 @@ inputCitiesTo.addEventListener('input',()=>{
 } );
 dropdownCitiesTo.addEventListener('click',(event)=>{
     selectSite(event,inputCitiesTo,dropdownCitiesTo);
-
 } );
+
 getData( proxy + sitiesApi , (data)=>{
 city = JSON.parse(data).filter(item => item.name);
-console.log(city);
 } );
+let zapros='http://min-prices.aviasales.ru/calendar_preload?origin=CEK&destination=KGD&depart_date=2020-05-15&one_way=true&tocen=685a5a5eae552ce74cf93cd4f53b0eda';
+getData(zapros ,(data)=>{
+    const bilet = JSON.parse(data);
+     console.log(bilet);
+});
