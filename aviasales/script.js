@@ -7,23 +7,17 @@ const serch = document.querySelector('.form-search'),
      dropdownCitiesTo=serch.querySelector('.dropdown__cities-to'),
      InputDateDepart = serch.querySelector('.input__date-depart') ;
 //..массив городов
-const sitiesApi = 'http://api.travelpayouts.com/data/ru/cities.json',
+const sitiesApi = 'database/cities.json',//http://api.travelpayouts.com/data/ru/cities.json
           proxy = 'https://cors-anywhere.herokuapp.com/',
-          API_KEY = '&685a5a5eae552ce74cf93cd4f53b0eda',
-          Kaledar = 'http://min-prices.aviasales.ru/calendar_preload?';
+          API_KEY = '685a5a5eae552ce74cf93cd4f53b0eda',
+          Kalendar = 'http://min-prices.aviasales.ru/calendar_preload';
 let city = []; 
-let bilet=[];
-const origin = 'CEK';// IATA-код пункта отправления. IATA код указывается буквами верхнего регистра, например MOW
-let destination = 'KGD';//IATA-код пункта назначения. IATA код указывается буквами верхнего регистра,
-let depart_date = '2020-05-15&' ;//дата вылета в формате YYYY-MM-DD.
-let one_way = true;// поиск билетов в один конец (true или false).
+
 
 //..API
 const getData=(url, callback)=>{
     const  request = new XMLHttpRequest();//обьект запроса
-    
     request.open('GET',url);
-    
     request.addEventListener('readystatechange', ()=>{
         if(request.readyState !== 4 )return;
         if(request.status === 200){
@@ -33,7 +27,6 @@ const getData=(url, callback)=>{
         }
     });
     request.send();
-
 };
 
 //...метод поиска города в массиве
@@ -41,53 +34,102 @@ const showSite = (input,list) =>{
     list.textContent ='';
        if(input.value !== ''){
            const Filtr = city.filter((item) =>{
-               if(item.name){
                 const fixitem = item.name.toLowerCase();
                 return fixitem.includes(input.value.toLowerCase());//переводим в один регистр
-               }
            } );
            Filtr.forEach((item) =>{
                const li = document.createElement('li');//..создаем элемент
                li.classList.add('dropdown__city');//добавляем класс
-               li.textContent = item.name+' '+item.code;
+               li.textContent = item.name;
                list.append(li);
            });
        }
    } ;
+
+
+const renderCheapEar=(chipTiket)=>{
+	console.log('chipTiket: ', chipTiket);
+
+};
+const renderChipDay=(chipTiketDay)=>{
+	console.log('chipTiketDay: ', chipTiketDay);
+
+};
+
    //...метод клика в выпадающем списке
 const selectSite=(e,input,list )=>{
     const target = e.target;
     if(target.tagName.toLowerCase() ==='li'){
         input.value = target.textContent;
-        const ngt=target.textContent;
-        const code = ngt[ngt.length-3]+ngt[ngt.length-2]+ngt[ngt.length-1];///str[str.length - 1]
-         console.log(code);   
+        const ngt=target.textContent; 
         list.textContent='';}
 };
+const renderChip =(data, date)=>{
+ const cheapTicet = JSON.parse(data).best_prices;
+
+ const chipTiketDay = cheapTicet.filter((item) =>{
+     return item.depart_date === date;
+ });
+
+
+ renderCheapEar(cheapTicet);  //рендер всех билеов
+ renderChipDay(chipTiketDay);//рендер на указанный день
+};
+
+
+
 
 
 //.....................................................
 inputCitiesForm.addEventListener('input',()=>{
-    showSite(inputCitiesForm,DropdownCitiesFrom);
+    showSite(inputCitiesForm,DropdownCitiesFrom);//выпадающий список 
 });
 
 DropdownCitiesFrom.addEventListener('click',(event)=>{
-    selectSite(event,inputCitiesForm,DropdownCitiesFrom);
-                        
+    selectSite(event,inputCitiesForm,DropdownCitiesFrom);//выбираем из выпадающего списка  
+    
 });
+
 //.....................................................
 inputCitiesTo.addEventListener('input',()=>{
-    showSite(inputCitiesTo,dropdownCitiesTo);
-} );
+    showSite(inputCitiesTo,dropdownCitiesTo);/////выпадающий список 
+});
 dropdownCitiesTo.addEventListener('click',(event)=>{
-    selectSite(event,inputCitiesTo,dropdownCitiesTo);
+    selectSite(event,inputCitiesTo,dropdownCitiesTo); //выбираем из выпадающего списка 
 } );
 
-getData( proxy + sitiesApi , (data)=>{
-city = JSON.parse(data).filter(item => item.name);
-} );
-let zapros='http://min-prices.aviasales.ru/calendar_preload?origin=CEK&destination=KGD&depart_date=2020-05-15&one_way=true&tocen=685a5a5eae552ce74cf93cd4f53b0eda';
+//................................
+getData( sitiesApi , (data)=>{
+city = JSON.parse(data).filter(item => item.name);  //получение списка городов
+
+});
+//...
+serch.addEventListener('submit',(event)=>{       //действия по нажатию кнопки и собираем данные с формы
+    event.preventDefault();                      //отключает перезагрузку страницы
+    const formData={                             // обьект содержащий данные формы 
+        from : city.find((item) => inputCitiesForm.value === item.name).code,
+        to : city.find((item) => inputCitiesTo.value === item.name).code,
+        when:InputDateDepart.value,
+    };
+	const reqwesData =`?depart_date=${formData.when}&origin=${formData.from}&destination=${formData.to}&one_way=true`;    //&tocen=' + API_KEY;   //строка содержащая данные для отправки
+	console.log('reqwesData: ', reqwesData);
+
+    getData(Kalendar + reqwesData,(respons)=>{  // запрашиваем билеты на указанную дату приходит в json на большее колво дат   
+        renderChip(respons,formData.when);      // парсер дат
+        });
+    });
+
+
+     
+
+
+
+/*
+let zapros=`http://min-prices.aviasales.ru/calendar_preload?origin=${origin}&destination=${destination}&depart_date=${depart_date}&one_way=true&tocen=685a5a5eae552ce74cf93cd4f53b0eda`;
 getData(zapros ,(data)=>{
-    const bilet = JSON.parse(data);
+    const bilet = JSON.parse(data).best_prices.filter(item => {
+        
+    });
      console.log(bilet);
 });
+*/
